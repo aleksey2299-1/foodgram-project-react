@@ -26,7 +26,8 @@ class Ingredient(models.Model):
 
 
 class IngredientRecipe(models.Model):
-    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE, related_name='ingredients')
+    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE,
+                               related_name='ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField(blank=True, null=True, default=None)
 
@@ -36,8 +37,11 @@ class IngredientRecipe(models.Model):
 
 
 class Recipe(models.Model):
-    author = models.ForeignKey(User, verbose_name="author",
-                               on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User, verbose_name="author",
+        on_delete=models.CASCADE,
+        related_name='recipes',
+    )
     name = models.CharField(max_length=50)
     tags = models.ManyToManyField(Tag, through='TagRecipe')
     text = models.TextField()

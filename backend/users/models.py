@@ -38,6 +38,7 @@ class CustomBaseUser(AbstractBaseUser):
     last_name = models.CharField(max_length=80)
     image = models.ImageField(blank=True, null=True)
     is_staff = models.BooleanField(default=False)
+    subscribe = models.ManyToManyField('CustomBaseUser')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
@@ -56,6 +57,9 @@ class CustomBaseUser(AbstractBaseUser):
 
     def get_short_name(self):
         return self.email
+    
+    def get_username(self):
+        return self.username
 
     def has_perm(self, perm, obj=None):
         return self.is_staff
