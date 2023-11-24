@@ -8,7 +8,25 @@ class UserForAnonSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomBaseUser
         fields = ('id', 'username', 'email', 'first_name',
-                  'last_name')
+                  'last_name', 'password')
+        extra_kwargs = {'password': {'write_only': True, 'min_length': 4}}
+
+    def create(self, validated_data):
+        user = CustomBaseUser(
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            email=validated_data['email'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password is not None:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 
 class UserSerializer(serializers.ModelSerializer):

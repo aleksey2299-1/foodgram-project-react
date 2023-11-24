@@ -12,14 +12,13 @@ router.register(r'recipes', RecipeViewSet)
 router.register(r'tags', TagViewSet)
 router.register(r'ingredients', IngredientViewSet)
 router.register(r'users', CustomUserViewSet)
-# router.register(r'users/{pk}/subscribe', subscribe)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/<int:pk>/subscribe/', subscribe),
     path('api/', include(router.urls)),
-    path('api/', include('djoser.urls')),  # Работа с пользователями
-    path('api/auth/', include('djoser.urls.authtoken')),  # Работа с токенами
+    # path('api/', include('djoser.urls')),
+    path('api/auth/', include('djoser.urls.authtoken')),
 ]
 
 if settings.DEBUG:

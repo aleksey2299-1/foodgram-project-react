@@ -56,7 +56,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         for ingredient in ingredients:
-            print(ingredient['amount'], ingredient['id'])
             IngredientRecipe.objects.create(
                 amount=ingredient['amount'],
                 ingredient=ingredient['id'],
@@ -69,6 +68,5 @@ class RecipeSerializer(serializers.ModelSerializer):
         super(RecipeSerializer, self).__init__(*args, **kwargs)
 
         if remove_fields:
-            # for multiple fields in a list
             for field_name in remove_fields:
                 self.fields.pop(field_name)

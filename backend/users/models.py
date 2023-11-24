@@ -1,6 +1,8 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 
+from users.validators import username_validator
+
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
@@ -32,7 +34,8 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomBaseUser(AbstractBaseUser):
-    username = models.CharField(max_length=40, unique=True)
+    username = models.CharField(max_length=40, unique=True,
+                                validators=[username_validator])
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=80)
     last_name = models.CharField(max_length=80)
@@ -57,7 +60,7 @@ class CustomBaseUser(AbstractBaseUser):
 
     def get_short_name(self):
         return self.email
-    
+
     def get_username(self):
         return self.username
 

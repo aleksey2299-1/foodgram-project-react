@@ -7,7 +7,6 @@ from rest_framework import status, permissions, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
-# from djoser.views import UserViewSet
 
 from .models import CustomBaseUser
 from .serializers import (UserSerializer, UserSubscribeSerializer,
@@ -18,7 +17,7 @@ from .permissions import OwnProfilePermission
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomBaseUser.objects.all()
     serializer_class = UserSerializer
-    http_method_names = ('get', 'list',)
+    http_method_names = ('get', 'post')
     permission_classes = [permissions.AllowAny]
     pagination_class = LimitOffsetPagination
 
@@ -28,20 +27,42 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return UserForAnonSerializer
 
     @action(
-        methods=['get', 'patch'], detail=False,
-        url_path='me', permission_classes=(OwnProfilePermission,),
+        methods=['get'], detail=False,
+        url_path='me', permission_classes=(permissions.IsAuthenticated,),
     )
     def me(self, request):
-        if request.method == 'GET':
-            user = get_object_or_404(CustomBaseUser, email=request.user)
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
         user = get_object_or_404(CustomBaseUser, email=request.user)
-        serializer = self.serializer_class(user, data=request.data,
-                                           partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+
+    @action(
+        methods=["post"], detail=False, url_path='set_password',
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def set_password(self, request):
+        user = request.user
+        if user.check_password(request.data['current_password']):
+            password = request.data['new_password']
+            user.set_password(password)
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        methods=["get"], detail=False, url_path='subscriptions',
+        permission_classes=(permissions.IsAuthenticated,),
+        pagination_class=LimitOffsetPagination,
+    )
+    def subscribed(self, request):
+        user = request.user
+        subscribes = user.subscribe.all()
+        serializer = UserSubscribeSerializer(
+            subscribes,
+            context={"request": request},
+            many=True,
+        )
+        return Response(serializer.data)
+
 
 
 # class SubscribtionViewSet(viewsets.ModelViewSet):
