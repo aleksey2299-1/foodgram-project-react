@@ -48,6 +48,10 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(validators=[MinValueValidator])
     image = models.ImageField(upload_to="recipes/images/",
                               null=True, default=None, blank=True)
+    added_to_favorites = models.ManyToManyField(
+        User, related_name='added_to_favorites',
+    )
+    shopping_cart = models.ManyToManyField(User, related_name='shopping_cart')
 
     def __str__(self):
         return self.name

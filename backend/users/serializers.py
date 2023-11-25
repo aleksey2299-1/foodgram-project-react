@@ -58,3 +58,19 @@ class UserSubscribeSerializer(UserSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+
+
+
+
+
+
+
+
+
+
+# def __init__(self, *args, **kwargs):
+#         # Don't return emails when listing users
+#         if kwargs['context']['view'].action == 'list':
+#             del self.fields['email']
+#         super().__init__(*args, **kwargs)

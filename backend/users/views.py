@@ -8,10 +8,9 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 
-from .models import CustomBaseUser
-from .serializers import (UserSerializer, UserSubscribeSerializer,
-                          UserForAnonSerializer)
-from .permissions import OwnProfilePermission
+from users.models import CustomBaseUser
+from users.serializers import (UserSerializer, UserSubscribeSerializer,
+                               UserForAnonSerializer)
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -62,16 +61,6 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             many=True,
         )
         return Response(serializer.data)
-
-
-
-# class SubscribtionViewSet(viewsets.ModelViewSet):
-#     serializer_class = UserSerializer
-#     http_method_names = ('get', 'post', 'delete')
-
-#     def get_queryset(self):
-#         queryset = self.request.user.subscribe.objects.all()
-#         return queryset
 
 
 @api_view(['POST', 'DELETE'])

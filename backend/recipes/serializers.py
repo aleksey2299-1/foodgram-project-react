@@ -3,7 +3,8 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from .models import Recipe, Tag, Ingredient, IngredientRecipe
+from recipes.models import Recipe, Tag, Ingredient, IngredientRecipe
+from users.models import CustomBaseUser
 
 
 class Base64ImageField(serializers.ImageField):
@@ -35,6 +36,14 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('amount', 'id',)
 
 
+class RecipeFavoriteSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
@@ -43,8 +52,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'tags', 'cooking_time', 'author',
-                  'text', 'ingredients', 'image')
+        fields = ('id', 'tags', 'author', 'ingredients', 'name',
+                  'image', 'text', 'cooking_time',)
         read_only_fields = ('author',)
 
     def perform_create(self, serializer):
@@ -70,3 +79,54 @@ class RecipeSerializer(serializers.ModelSerializer):
         if remove_fields:
             for field_name in remove_fields:
                 self.fields.pop(field_name)
+
+
+class IngredientRecipeListSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    name = serializers.CharField(source='ingredient.name')
+    measurement_unit = serializers.CharField(
+        source='ingredient.measurement_unit'
+    )
+
+    class Meta:
+        model = IngredientRecipe
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomBaseUser
+        fields = ('email', 'id', 'username', 'first_name', 'last_name')
+
+
+class RecipeListSerializer(serializers.ModelSerializer):
+    ingredients = IngredientRecipeListSerializer(many=True)
+    tags = TagSerializer(many=True)
+    image = Base64ImageField(required=False, allow_null=True)
+    author = AuthorSerializer()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'is_in_shopping_cart',
+                  'name', 'image', 'text', 'cooking_time')
+
+    # def __init__(self, *args, **kwargs):
+    #     if kwargs['context']['request'].user.is_anonymous:
+    #         del self.fields['is_favorited']
+    #         del self.fields['is_in_shopping_cart']
+    #     super().__init__(*args, **kwargs)
+
+    def get_is_favorited(self, obj):
+        if not self.context['request'].user.is_anonymous:
+            return obj.added_to_favorites.filter(
+                email=self.context['request'].user.email).exists()
+        return False
+
+    def get_is_in_shopping_cart(self, obj):
+        if not self.context['request'].user.is_anonymous:
+            return obj.shopping_cart.filter(
+                email=self.context['request'].user.email).exists()
+        return False
