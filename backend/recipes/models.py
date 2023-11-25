@@ -29,7 +29,7 @@ class IngredientRecipe(models.Model):
     recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE,
                                related_name='ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.IntegerField(blank=True, null=True, default=None)
+    amount = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
         return (f'{self.ingredient.name} - {self.amount} '
@@ -45,7 +45,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=50)
     tags = models.ManyToManyField(Tag, through='TagRecipe')
     text = models.TextField()
-    cooking_time = models.IntegerField(validators=[MinValueValidator])
+    cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
     image = models.ImageField(upload_to="recipes/images/",
                               null=True, default=None, blank=True)
     added_to_favorites = models.ManyToManyField(

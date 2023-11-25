@@ -10,15 +10,18 @@ from recipes.serializers import (
     TagSerializer,
     IngredientSerializer,
     RecipeFavoriteSerializer,
-    RecipeListSerializer,
+    RecipeCreateSerializer,
 )
 from recipes.paginators import RecipePagination
+from recipes.permissions import AuthorPermission
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = RecipePagination
+    http_method_names = ('get', 'post', 'patch', 'delete')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
@@ -26,9 +29,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'list':
-            return RecipeListSerializer
+        if self.action == 'create' or self.action == 'partial_update':
+            return RecipeCreateSerializer
         return RecipeSerializer
+
+    def get_permissions(self):
+        if self.action == 'partial_update':
+            return (AuthorPermission(),)
+        return super().get_permissions()
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = False
+        return super().update(request, *args, **kwargs)
 
     @action(
         methods=["post", "delete"], detail=True, url_path='favorite',

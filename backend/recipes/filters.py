@@ -1,4 +1,6 @@
-from django_filters import NumberFilter, FilterSet, ModelMultipleChoiceFilter, MultipleChoiceFilter
+from django_filters import (
+    NumberFilter, FilterSet, ModelMultipleChoiceFilter, MultipleChoiceFilter
+)
 
 from recipes.models import Recipe, Tag
 

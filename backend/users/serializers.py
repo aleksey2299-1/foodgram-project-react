@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from recipes.serializers import RecipeSerializer
+from recipes.serializers import RecipeCreateSerializer
 from users.models import CustomBaseUser
 
 
@@ -44,8 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserSubscribeSerializer(UserSerializer):
-    recipes = RecipeSerializer(
-        remove_fields=['tags', 'ingredients', 'text', 'author'],
+    recipes = RecipeCreateSerializer(
+        remove_fields=['tags', 'ingredients', 'text',],
         many=True,
         read_only=True,
     )

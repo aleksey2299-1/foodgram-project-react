@@ -7,6 +7,19 @@ from recipes.models import Recipe, Tag, Ingredient, IngredientRecipe
 from users.models import CustomBaseUser
 
 
+def validate_ingredients(value):
+    print(value[0], len(value))
+    for i in range(len(value)):
+        for j in range(i + 1, len(value)):
+            print(i, j)
+            if value[i] == value[j]:
+                print('True')
+                return serializers.ValidationError(
+                    "Similar ingredients input"
+                    )
+    return value
+
+
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
@@ -44,41 +57,74 @@ class RecipeFavoriteSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientRecipeSerializer(many=True)
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    ingredients = IngredientRecipeSerializer(many=True, allow_empty=False)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
-                                              many=True)
-    image = Base64ImageField(required=False, allow_null=True)
+                                              many=True, allow_empty=False)
+    image = Base64ImageField(required=True)
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'name',
-                  'image', 'text', 'cooking_time',)
-        read_only_fields = ('author',)
+        fields = ('ingredients', 'tags', 'image', 'name',
+                  'text', 'cooking_time',)
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def validate_ingredients(self, value):
+        if len(value) > 1:
+            for i in range(len(value)):
+                for j in range(i + 1, len(value)):
+                    if value[i] == value[j]:
+                        raise serializers.ValidationError(
+                            "Similar ingredients input"
+                            )
+        return value
+
+    def validate_tags(self, value):
+        if len(value) > 1:
+            for i in range(len(value)):
+                for j in range(i + 1, len(value)):
+                    if value[i] == value[j]:
+                        raise serializers.ValidationError(
+                            "Similar tags input"
+                            )
+        return value
 
     def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
+        ingredients_data = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        for ingredient in ingredients:
+        for ingredient_data in ingredients_data:
             IngredientRecipe.objects.create(
-                amount=ingredient['amount'],
-                ingredient=ingredient['id'],
+                amount=ingredient_data['amount'],
+                ingredient=ingredient_data['id'],
                 recipe=recipe,
             )
         return recipe
 
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        instance.ingredients.filter(recipe=instance).delete()
+        for ingredient in ingredients:
+            IngredientRecipe.objects.create(
+                amount=ingredient['amount'],
+                ingredient=ingredient['id'],
+                recipe=instance,
+            )
+        instance = super().update(instance, validated_data)
+        instance.save()
+        return instance
+
     def __init__(self, *args, **kwargs):
         remove_fields = kwargs.pop('remove_fields', None)
-        super(RecipeSerializer, self).__init__(*args, **kwargs)
+        super(RecipeCreateSerializer, self).__init__(*args, **kwargs)
 
         if remove_fields:
             for field_name in remove_fields:
                 self.fields.pop(field_name)
+
+    def to_representation(self, instance):
+        serializer = RecipeSerializer(instance, context={'request': self.context['request']})
+        return serializer.data
 
 
 class IngredientRecipeListSerializer(serializers.ModelSerializer):
@@ -99,7 +145,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name')
 
 
-class RecipeListSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeListSerializer(many=True)
     tags = TagSerializer(many=True)
     image = Base64ImageField(required=False, allow_null=True)
