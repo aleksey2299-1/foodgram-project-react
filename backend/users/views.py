@@ -11,6 +11,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from users.models import CustomBaseUser
 from users.serializers import (UserSerializer, UserSubscribeSerializer,
                                UserForAnonSerializer)
+from users.paginators import UserPagination
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -18,7 +19,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     http_method_names = ('get', 'post')
     permission_classes = [permissions.AllowAny]
-    pagination_class = LimitOffsetPagination
+    pagination_class = UserPagination
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated:
@@ -50,16 +51,21 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     @action(
         methods=["get"], detail=False, url_path='subscriptions',
         permission_classes=(permissions.IsAuthenticated,),
-        pagination_class=LimitOffsetPagination,
+        pagination_class=UserPagination,
     )
     def subscribed(self, request):
         user = request.user
         subscribes = user.subscribe.all()
-        serializer = UserSubscribeSerializer(
-            subscribes,
-            context={"request": request},
-            many=True,
-        )
+        queryset = self.filter_queryset(subscribes)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = UserSubscribeSerializer(
+                page,
+                context={"request": request},
+                many=True,
+            )
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
