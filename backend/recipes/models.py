@@ -13,6 +13,10 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = 'Тэг'
+        verbose_name_plural = 'Тэги'
+
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=50)
@@ -23,6 +27,8 @@ class Ingredient(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = 'Вид ингредиента'
+        verbose_name_plural = 'Виды ингредиентов'
 
 
 class IngredientRecipe(models.Model):
@@ -34,6 +40,10 @@ class IngredientRecipe(models.Model):
     def __str__(self):
         return (f'{self.ingredient.name} '
                 f'({self.ingredient.measurement_unit}) - {self.amount}')
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
 
 
 class Recipe(models.Model):
@@ -55,6 +65,13 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+    def in_favorites_count(self):
+        return self.added_to_favorites.count()
+
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
 
 
 class TagRecipe(models.Model):

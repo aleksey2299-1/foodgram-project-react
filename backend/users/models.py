@@ -51,6 +51,8 @@ class CustomBaseUser(AbstractBaseUser):
     class Meta:
         app_label = "users"
         db_table = "users"
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
     def __str__(self):
         return self.email
