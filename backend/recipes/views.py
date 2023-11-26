@@ -150,4 +150,4 @@ class IngredientViewSet(viewsets.ModelViewSet):
     http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name',)
-    # filterset_fields = {'name': ['istartswith']}  # нечувствительно к регистру
+    # filterset_fields = {'name': ['istartswith']} # нечувствительно к регистру

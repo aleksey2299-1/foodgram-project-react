@@ -7,6 +7,8 @@ from rest_framework import routers
 from recipes.views import RecipeViewSet, TagViewSet, IngredientViewSet
 from users.views import CustomUserViewSet, subscribe
 
+handler404 = 'pages.views.handler_404'
+
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet)
 router.register(r'tags', TagViewSet)
