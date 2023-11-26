@@ -1,12 +1,12 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status, permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 
 from users.models import CustomBaseUser
-from users.serializers import (UserSerializer, UserSubscribeSerializer,
-                               UserForAnonSerializer)
 from users.paginators import UserPagination
+from users.serializers import (UserForAnonSerializer, UserSerializer,
+                               UserSubscribeSerializer)
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):

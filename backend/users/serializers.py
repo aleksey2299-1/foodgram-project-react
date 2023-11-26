@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from django.core.paginator import Paginator
+from rest_framework import serializers
 
 from recipes.models import Recipe
 from recipes.serializers import Base64ImageField

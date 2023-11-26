@@ -1,22 +1,18 @@
 from io import StringIO
 
-from rest_framework import status, permissions, viewsets
+from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
 
 from recipes.filters import RecipeFilter
-from recipes.models import Recipe, Tag, Ingredient
-from recipes.serializers import (
-    RecipeSerializer,
-    TagSerializer,
-    IngredientSerializer,
-    RecipeFavoriteSerializer,
-    RecipeCreateSerializer,
-)
+from recipes.models import Ingredient, Recipe, Tag
 from recipes.paginators import RecipePagination
 from recipes.permissions import AuthorPermission
+from recipes.serializers import (IngredientSerializer, RecipeCreateSerializer,
+                                 RecipeFavoriteSerializer, RecipeSerializer,
+                                 TagSerializer)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -150,4 +146,5 @@ class IngredientViewSet(viewsets.ModelViewSet):
     http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name',)
+    # filterset_fields = {'name': ['icontains']}
     # filterset_fields = {'name': ['istartswith']} # нечувствительно к регистру

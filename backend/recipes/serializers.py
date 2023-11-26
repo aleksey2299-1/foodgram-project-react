@@ -3,7 +3,7 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from recipes.models import Recipe, Tag, Ingredient, IngredientRecipe
+from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
 from users.models import CustomBaseUser
 
 
@@ -16,7 +16,7 @@ def validate_ingredients(value):
                 print('True')
                 return serializers.ValidationError(
                     "Similar ingredients input"
-                    )
+                )
     return value
 
 
@@ -75,7 +75,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     if value[i] == value[j]:
                         raise serializers.ValidationError(
                             "Similar ingredients input"
-                            )
+                        )
         return value
 
     def validate_tags(self, value):
@@ -85,7 +85,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     if value[i] == value[j]:
                         raise serializers.ValidationError(
                             "Similar tags input"
-                            )
+                        )
         return value
 
     def create(self, validated_data):

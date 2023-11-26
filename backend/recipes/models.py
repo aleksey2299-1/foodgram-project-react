@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
 
 User = get_user_model()
 
@@ -19,13 +19,14 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=50)
-    measurement_unit = models.CharField(max_length=20)
+    name = models.CharField(max_length=100)
+    measurement_unit = models.CharField(max_length=50)
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
 
     class Meta:
+        unique_together = ('name', 'measurement_unit')
         ordering = ["id"]
         verbose_name = 'Вид ингредиента'
         verbose_name_plural = 'Виды ингредиентов'

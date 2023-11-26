@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from recipes.models import Recipe, Tag, Ingredient, TagRecipe, IngredientRecipe
 from recipes.forms import RecipeAdminForm
+from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag, TagRecipe
 
 
 class IngredientRecipeInline(admin.StackedInline):
