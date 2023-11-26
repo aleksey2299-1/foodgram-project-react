@@ -1,12 +1,7 @@
 from django.shortcuts import get_object_or_404
-# from django.views.decorators.csrf import csrf_exempt
-# from django.contrib.auth.decorators import permission_required
-# from django.core.exceptions import PermissionDenied
 from rest_framework import status, permissions, viewsets
-# from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-from rest_framework.pagination import LimitOffsetPagination
 
 from users.models import CustomBaseUser
 from users.serializers import (UserSerializer, UserSubscribeSerializer,

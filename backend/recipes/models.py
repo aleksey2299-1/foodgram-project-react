@@ -32,8 +32,8 @@ class IngredientRecipe(models.Model):
     amount = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
-        return (f'{self.ingredient.name} - {self.amount} '
-                f'{self.ingredient.measurement_unit}')
+        return (f'{self.ingredient.name} '
+                f'({self.ingredient.measurement_unit}) - {self.amount}')
 
 
 class Recipe(models.Model):

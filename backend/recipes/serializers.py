@@ -114,16 +114,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
-    def __init__(self, *args, **kwargs):
-        remove_fields = kwargs.pop('remove_fields', None)
-        super(RecipeCreateSerializer, self).__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     remove_fields = kwargs.pop('remove_fields', None)
+    #     super(RecipeCreateSerializer, self).__init__(*args, **kwargs)
 
-        if remove_fields:
-            for field_name in remove_fields:
-                self.fields.pop(field_name)
+    #     if remove_fields:
+    #         for field_name in remove_fields:
+    #             self.fields.pop(field_name)
 
     def to_representation(self, instance):
-        serializer = RecipeSerializer(instance, context={'request': self.context['request']})
+        serializer = RecipeSerializer(instance, context={
+            'request': self.context['request']
+        })
         return serializer.data
 
 

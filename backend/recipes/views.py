@@ -1,7 +1,10 @@
+from io import StringIO
+
 from rest_framework import status, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponse
 
 from recipes.filters import RecipeFilter
 from recipes.models import Recipe, Tag, Ingredient
@@ -95,6 +98,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe.shopping_cart.remove(user)
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        methods=["get"], url_path='download_shopping_cart', detail=False,
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def download_shopping_cart(self, request):
+        shop_dict = {}
+        user = request.user
+        recipes = user.shopping_cart.all()
+        for recipe in recipes:
+            for ingredient in recipe.ingredients.all():
+                name = ingredient.ingredient.name.capitalize()
+                measurement_unit = ingredient.ingredient.measurement_unit
+                full_ingredient = name + '(' + measurement_unit + ') - '
+                amount = ingredient.amount
+                shop_dict[full_ingredient] = (
+                    shop_dict.get(full_ingredient, 0) + amount
+                )
+        shopping_cart = StringIO()
+        for key, value in shop_dict.items():
+            shopping_cart.write(key + str(value) + '\n')
+        filename = 'shopping_cart.txt'
+        response = HttpResponse(shopping_cart.getvalue(),
+                                content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename={0}'.format(filename)
+        )
+        return response
 
 
 class TagViewSet(viewsets.ModelViewSet):
