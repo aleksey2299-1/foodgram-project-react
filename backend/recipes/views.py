@@ -37,7 +37,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeSerializer
 
     def get_permissions(self):
-        if self.action == 'partial_update':
+        if self.action == 'partial_update' or self.action == 'destroy':
             return (AuthorPermission(),)
         return super().get_permissions()
 
@@ -51,12 +51,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         user = request.user
-        try:
-            recipe = Recipe.objects.get(id=pk)
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        check = recipe.added_to_favorites.filter(email=user.email).exists()
         if request.method == 'POST':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Exception:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            check = recipe.added_to_favorites.filter(email=user.email).exists()
             if not check:
                 recipe.added_to_favorites.add(user)
                 serializer = RecipeFavoriteSerializer(
@@ -67,6 +67,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_201_CREATED)
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Exception:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            check = recipe.added_to_favorites.filter(email=user.email).exists()
             if check:
                 recipe.added_to_favorites.remove(user)
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -78,12 +83,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         user = request.user
-        try:
-            recipe = Recipe.objects.get(id=pk)
-        except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        check = recipe.shopping_cart.filter(email=user.email).exists()
         if request.method == 'POST':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Exception:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            check = recipe.shopping_cart.filter(email=user.email).exists()
             if not check:
                 recipe.shopping_cart.add(user)
                 serializer = RecipeFavoriteSerializer(
@@ -94,6 +99,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_201_CREATED)
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if request.method == 'DELETE':
+            try:
+                recipe = Recipe.objects.get(id=pk)
+            except Exception:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            check = recipe.shopping_cart.filter(email=user.email).exists()
             if check:
                 recipe.shopping_cart.remove(user)
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -111,7 +121,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             for ingredient in recipe.ingredients.all():
                 name = ingredient.ingredient.name.capitalize()
                 measurement_unit = ingredient.ingredient.measurement_unit
-                full_ingredient = name + '(' + measurement_unit + ') - '
+                full_ingredient = name + ' (' + measurement_unit + ') - '
                 amount = ingredient.amount
                 shop_dict[full_ingredient] = (
                     shop_dict.get(full_ingredient, 0) + amount
@@ -139,4 +149,5 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'name': ['istartswith']}  # нечувствительно к регистру
+    filterset_fields = ('name',)
+    # filterset_fields = {'name': ['istartswith']}  # нечувствительно к регистру
