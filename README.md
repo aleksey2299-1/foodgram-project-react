@@ -1,1 +1,4 @@
-# praktikum_new_diplom
+https://foodgram.servehalflife.com/
+
+email: admin@admin.com
+password: admin
