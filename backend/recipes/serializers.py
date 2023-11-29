@@ -1,32 +1,23 @@
-import base64
-
-from django.core.files.base import ContentFile
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from recipes.fields import Base64ImageField
 from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
 from users.models import CustomBaseUser
 
-
-def validate_ingredients(value):
-    print(value[0], len(value))
-    for i in range(len(value)):
-        for j in range(i + 1, len(value)):
-            print(i, j)
-            if value[i] == value[j]:
-                print('True')
-                return serializers.ValidationError(
-                    "Similar ingredients input"
-                )
-    return value
+ru_error_messages = {
+    'does_not_exist': _('Недопустимый первичный ключ "{pk_value}"'
+                        ' - объект не существует.'),
+}
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
+def create_ingredients(data, model):
+    for ingredient in data:
+        IngredientRecipe.objects.create(
+            amount=ingredient['amount'],
+            ingredient=ingredient['id'],
+            recipe=model,
+        )
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -42,7 +33,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all(),
+        error_messages=ru_error_messages,
+    )
 
     class Meta:
         model = IngredientRecipe
@@ -59,8 +53,12 @@ class RecipeFavoriteSerializer(serializers.ModelSerializer):
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeSerializer(many=True, allow_empty=False)
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
-                                              many=True, allow_empty=False)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        allow_empty=False,
+        error_messages=ru_error_messages,
+    )
     image = Base64ImageField(required=True)
 
     class Meta:
@@ -69,58 +67,38 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time',)
 
     def validate_ingredients(self, value):
-        if len(value) > 1:
-            for i in range(len(value)):
-                for j in range(i + 1, len(value)):
-                    if value[i] == value[j]:
-                        raise serializers.ValidationError(
-                            "Similar ingredients input"
-                        )
+        set_for_dict = set()
+        set_for_dict = set_for_dict.union(x['id'] for x in value)
+        if len(set_for_dict) < len(value):
+            raise serializers.ValidationError(
+                "Повторяющиеся данные."
+            )
         return value
 
     def validate_tags(self, value):
-        if len(value) > 1:
-            for i in range(len(value)):
-                for j in range(i + 1, len(value)):
-                    if value[i] == value[j]:
-                        raise serializers.ValidationError(
-                            "Similar tags input"
-                        )
+        if len(set(value)) < len(value):
+            raise serializers.ValidationError(
+                "Повторяющиеся данные."
+            )
         return value
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
+        ingredients_data = sorted(ingredients_data, key=lambda d: d['id'].name)
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        for ingredient_data in ingredients_data:
-            IngredientRecipe.objects.create(
-                amount=ingredient_data['amount'],
-                ingredient=ingredient_data['id'],
-                recipe=recipe,
-            )
+        create_ingredients(ingredients_data, recipe)
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
+        ingredients_data = validated_data.pop('ingredients')
+        ingredients_data = sorted(ingredients_data, key=lambda d: d['id'].name)
         instance.ingredients.filter(recipe=instance).delete()
-        for ingredient in ingredients:
-            IngredientRecipe.objects.create(
-                amount=ingredient['amount'],
-                ingredient=ingredient['id'],
-                recipe=instance,
-            )
+        create_ingredients(ingredients_data, instance)
         instance = super().update(instance, validated_data)
         instance.save()
         return instance
-
-    # def __init__(self, *args, **kwargs):
-    #     remove_fields = kwargs.pop('remove_fields', None)
-    #     super(RecipeCreateSerializer, self).__init__(*args, **kwargs)
-
-    #     if remove_fields:
-    #         for field_name in remove_fields:
-    #             self.fields.pop(field_name)
 
     def to_representation(self, instance):
         serializer = RecipeSerializer(instance, context={
@@ -160,12 +138,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
                   'name', 'image', 'text', 'cooking_time')
-
-    # def __init__(self, *args, **kwargs):
-    #     if kwargs['context']['request'].user.is_anonymous:
-    #         del self.fields['is_favorited']
-    #         del self.fields['is_in_shopping_cart']
-    #     super().__init__(*args, **kwargs)
 
     def get_is_favorited(self, obj):
         if not self.context['request'].user.is_anonymous:

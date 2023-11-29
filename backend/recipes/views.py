@@ -15,6 +15,37 @@ from recipes.serializers import (IngredientSerializer, RecipeCreateSerializer,
                                  TagSerializer)
 
 
+def post_method(field_name, request, pk):
+    user = request.user
+    try:
+        recipe = Recipe.objects.get(id=pk)
+    except Exception:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    check = getattr(recipe, field_name).filter(email=user.email).exists()
+    if not check:
+        getattr(recipe, field_name).add(user)
+        serializer = RecipeFavoriteSerializer(
+            recipe,
+            context={"request": request},
+        )
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def delete_method(field_name, request, pk):
+    user = request.user
+    try:
+        recipe = Recipe.objects.get(id=pk)
+    except Exception:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    check = getattr(recipe, field_name).filter(email=user.email).exists()
+    if check:
+        getattr(recipe, field_name).remove(user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
@@ -28,12 +59,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'partial_update':
+        if self.action in ('create', 'partial_update'):
             return RecipeCreateSerializer
         return RecipeSerializer
 
     def get_permissions(self):
-        if self.action == 'partial_update' or self.action == 'destroy':
+        if self.action in ('partial_update', 'destroy'):
             return (AuthorPermission(),)
         return super().get_permissions()
 
@@ -42,68 +73,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     @action(
-        methods=["post", "delete"], detail=True, url_path='favorite',
+        methods=["post"], detail=True, url_path='favorite',
         permission_classes=(permissions.IsAuthenticated,),
     )
     def favorite(self, request, pk):
-        user = request.user
-        if request.method == 'POST':
-            try:
-                recipe = Recipe.objects.get(id=pk)
-            except Exception:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            check = recipe.added_to_favorites.filter(email=user.email).exists()
-            if not check:
-                recipe.added_to_favorites.add(user)
-                serializer = RecipeFavoriteSerializer(
-                    recipe,
-                    context={"request": request},
-                )
-                return Response(serializer.data,
-                                status=status.HTTP_201_CREATED)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            try:
-                recipe = Recipe.objects.get(id=pk)
-            except Exception:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            check = recipe.added_to_favorites.filter(email=user.email).exists()
-            if check:
-                recipe.added_to_favorites.remove(user)
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        field_name = 'added_to_favorites'
+        return post_method(field_name, request, pk)
+
+    @favorite.mapping.delete
+    def favorite_delete(self, request, pk):
+        field_name = 'added_to_favorites'
+        return delete_method(field_name, request, pk)
 
     @action(
-        methods=["post", "delete"], detail=True, url_path='shopping_cart',
+        methods=["post"], detail=True, url_path='shopping_cart',
         permission_classes=(permissions.IsAuthenticated,),
     )
     def shopping_cart(self, request, pk):
-        user = request.user
-        if request.method == 'POST':
-            try:
-                recipe = Recipe.objects.get(id=pk)
-            except Exception:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            check = recipe.shopping_cart.filter(email=user.email).exists()
-            if not check:
-                recipe.shopping_cart.add(user)
-                serializer = RecipeFavoriteSerializer(
-                    recipe,
-                    context={"request": request},
-                )
-                return Response(serializer.data,
-                                status=status.HTTP_201_CREATED)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            try:
-                recipe = Recipe.objects.get(id=pk)
-            except Exception:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-            check = recipe.shopping_cart.filter(email=user.email).exists()
-            if check:
-                recipe.shopping_cart.remove(user)
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        field_name = 'shopping_cart'
+        return post_method(field_name, request, pk)
+
+    @shopping_cart.mapping.delete
+    def shopping_cart_delete(self, request, pk):
+        field_name = 'shopping_cart'
+        return delete_method(field_name, request, pk)
 
     @action(
         methods=["get"], url_path='download_shopping_cart', detail=False,
@@ -146,5 +139,3 @@ class IngredientViewSet(viewsets.ModelViewSet):
     http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name',)
-    # filterset_fields = {'name': ['icontains']}
-    # filterset_fields = {'name': ['istartswith']} # нечувствительно к регистру

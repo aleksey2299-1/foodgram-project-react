@@ -1,35 +1,8 @@
-from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
+from users.managers import CustomUserManager
 from users.validators import username_validator
-
-
-class CustomUserManager(BaseUserManager):
-    use_in_migrations = True
-
-    def create_user(self, username, email, first_name, last_name, password):
-        user = self.model(
-            username=username,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, username, email, first_name,
-                         last_name, password):
-        user = self.model(
-            username=username,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            is_staff=True,
-        )
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
 
 
 class CustomBaseUser(AbstractBaseUser):
@@ -52,6 +25,11 @@ class CustomBaseUser(AbstractBaseUser):
         db_table = "users"
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(username__exact='me'), name="name_not_me",
+            ),
+        ]
 
     def __str__(self):
         return self.email
