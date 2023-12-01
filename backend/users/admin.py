@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.authtoken.models import TokenProxy
 
 from recipes.models import Recipe
+from users.forms import UserThroughForm
 from users.models import CustomBaseUser
 
 
@@ -13,7 +14,7 @@ class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff',
                     'subscribes', 'recipes')
     empty_value_display = '-пусто-'
-    search_fields = ('email', 'usernamename')
+    search_fields = ('email', 'username')
     list_filter = []
     filter_horizontal = []
     fieldsets = (
@@ -34,6 +35,18 @@ class CustomUserAdmin(UserAdmin):
     @admin.display(description="Рецепты")
     def recipes(self, user: CustomBaseUser):
         return Recipe.objects.filter(author=user).count()
+
+
+@admin.register(CustomBaseUser.subscribe.through)
+class ShoppingCartRecipeUserRelationAdmin(admin.ModelAdmin):
+    form = UserThroughForm
+    list_display = ('from_custombaseuser', 'to_custombaseuser')
+    empty_value_display = '-пусто-'
+
+    def __init__(self, *args, **kwargs):
+        args[0]._meta.verbose_name = 'объекты подписки'
+        args[0]._meta.verbose_name_plural = 'Пользователь подписан на'
+        super().__init__(*args, **kwargs)
 
 
 admin.site.unregister(Group)

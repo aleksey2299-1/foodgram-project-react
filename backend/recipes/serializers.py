@@ -4,6 +4,7 @@ from rest_framework import serializers
 from recipes.fields import Base64ImageField
 from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
 from users.models import CustomBaseUser
+from users.serializers import UserSerializer
 
 ru_error_messages = {
     'does_not_exist': _('Недопустимый первичный ключ "{pk_value}"'
@@ -129,7 +130,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeListSerializer(many=True)
     tags = TagSerializer(many=True)
     image = Base64ImageField(required=False, allow_null=True)
-    author = AuthorSerializer()
+    author = UserSerializer()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 

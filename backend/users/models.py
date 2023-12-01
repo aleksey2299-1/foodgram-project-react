@@ -1,17 +1,21 @@
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
+from foodgram_backend.constants import MAX_LENGTH_NAME
 from users.managers import CustomUserManager
-from users.validators import username_validator
+from users.validators import validate_username
 
 
 class CustomBaseUser(AbstractBaseUser):
-    username = models.CharField(max_length=40, unique=True,
-                                validators=[username_validator])
+    username = models.CharField(max_length=MAX_LENGTH_NAME, unique=True,
+                                validators=(validate_username,))
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=80)
-    last_name = models.CharField(max_length=80)
-    image = models.ImageField(blank=True, null=True)
+    first_name = models.CharField(max_length=MAX_LENGTH_NAME,
+                                  verbose_name='имя')
+    last_name = models.CharField(max_length=MAX_LENGTH_NAME,
+                                 verbose_name='фамилия')
+    image = models.ImageField(blank=True, null=True,
+                              verbose_name='картинка пользователя')
     is_staff = models.BooleanField(default=False)
     subscribe = models.ManyToManyField('CustomBaseUser')
 
@@ -23,7 +27,7 @@ class CustomBaseUser(AbstractBaseUser):
     class Meta:
         app_label = "users"
         db_table = "users"
-        verbose_name = 'Пользователь'
+        verbose_name = 'пользователь'
         verbose_name_plural = 'Пользователи'
         constraints = [
             models.CheckConstraint(

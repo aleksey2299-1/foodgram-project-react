@@ -40,9 +40,11 @@ class UserSerializer(serializers.ModelSerializer):
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
-        return self.context['request'].user.subscribe.filter(
-            email=obj.email
-        ).exists()
+        if not self.context['request'].user.is_anonymous:
+            return self.context['request'].user.subscribe.filter(
+                email=obj.email
+            ).exists()
+        return False
 
 
 class UserRecipeSerializer(serializers.ModelSerializer):
