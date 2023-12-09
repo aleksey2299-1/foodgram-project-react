@@ -138,4 +138,4 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     http_method_names = ('get',)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('^name',)
+    filterset_fields = {'name': ['istartswith']}
