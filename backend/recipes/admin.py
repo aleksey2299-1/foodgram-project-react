@@ -24,8 +24,6 @@ class UserInline(admin.TabularInline):
     min_num = 1
     extra = 1
     fields = ('username',)
-#     # verbose_name = 'пользователь'
-#     # verbose_name_plural = 'пользователи'
 
 
 class RecipeInline(admin.TabularInline):
@@ -33,8 +31,6 @@ class RecipeInline(admin.TabularInline):
     min_num = 1
     extra = 1
     fields = ('name',)
-#     # verbose_name = 'рецепт'
-#     # verbose_name_plural = 'рецепты'
 
 
 @admin.register(Ingredient)
