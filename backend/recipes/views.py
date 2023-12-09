@@ -137,5 +137,5 @@ class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     http_method_names = ('get',)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = {'name': ['istartswith']}
+    filter_backends = (DjangoFilterBackend, )
+    filterset_fields = {'name': ['icontains']}
