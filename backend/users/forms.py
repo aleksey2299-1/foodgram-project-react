@@ -4,6 +4,7 @@ from users.models import CustomBaseUser
 
 
 class UserThroughForm(forms.ModelForm):
+    """Form for admin panel."""
     from_custombaseuser = forms.ModelChoiceField(
         queryset=CustomBaseUser.objects.all(),
         label='Пользователь',

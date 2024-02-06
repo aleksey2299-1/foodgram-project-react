@@ -2,7 +2,7 @@ from rest_framework import permissions
 
 
 class AuthorPermission(permissions.BasePermission):
-    """Только владелец может редактировать свой профиль."""
+    """Только автор может редактировать объект."""
     def has_permission(self, request, view):
         return request.user.is_authenticated
 
